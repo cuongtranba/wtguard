@@ -1,0 +1,15 @@
+# Binaries
+/wtguard
+/dist/
+*.exe
+*.test
+*.out
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Go
+vendor/
+coverage.txt
