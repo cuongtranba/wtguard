@@ -25,7 +25,25 @@ LLM runs `git commit ...`
 
 Each layer alone is bypassable. All three together are not.
 
-## Install
+## Install (one line)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/cuongtranba/wtguard/main/scripts/install.sh | sh
+```
+
+The script downloads the latest release binary (or falls back to `go install` if no binary is available for your platform), drops it at `~/.wtguard/bin/wtguard`, symlinks the `git` proxy, sets `git config --global init.templateDir` so every new clone ships with the hook, and patches your shell rc to put `~/.wtguard/bin` on `PATH`.
+
+Open a new shell or `source ~/.zshrc` (or `.bashrc`) afterwards.
+
+### Uninstall (one line)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/cuongtranba/wtguard/main/scripts/uninstall.sh | sh
+```
+
+Reverses everything the installer did: removes `~/.wtguard/`, unsets the global `init.templateDir` (only if it still points at us), and strips the marker block from your shell rc. GitHub branch protection rules — if you applied them via `wtguard install --remote-protect` — are not auto-removed.
+
+### Manual install
 
 ```sh
 go install github.com/cuongtranba/wtguard/cmd/wtguard@latest
