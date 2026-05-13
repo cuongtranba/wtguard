@@ -110,6 +110,12 @@ func (r *Repo) Worktrees() ([]Worktree, error) {
 	return parseWorktrees(out), nil
 }
 
+// HasLocalBranch reports whether refs/heads/<branch> exists.
+func (r *Repo) HasLocalBranch(branch string) bool {
+	_, err := r.runOut("show-ref", "--verify", "--quiet", "refs/heads/"+branch)
+	return err == nil
+}
+
 // AddWorktree runs `git worktree add`. If create is true the branch is
 // created from HEAD.
 func (r *Repo) AddWorktree(path, branch string, create bool) error {

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/cuongtranba/wtguard/internal/config"
-	"github.com/cuongtranba/wtguard/internal/git"
 	"github.com/cuongtranba/wtguard/internal/hook"
 	"github.com/urfave/cli/v2"
 )
@@ -22,6 +21,7 @@ func cmdCreate() *cli.Command {
 			"Default path: '<wtguard.worktreeDir><repoName>-<branch>'.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "path", Usage: "explicit worktree path"},
+			&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "skip the hook-install prompt"},
 		},
 		Action: actionCreate,
 	}
@@ -63,7 +63,7 @@ func actionCreate(c *cli.Context) error {
 		}
 	}
 	// Decide whether to create the branch or check it out.
-	createBranch := !branchExists(repo, branch)
+	createBranch := !repo.HasLocalBranch(branch)
 	if err := repo.AddWorktree(wtPath, branch, createBranch); err != nil {
 		return err
 	}
@@ -160,20 +160,6 @@ func actionList(c *cli.Context) error {
 		}
 	}
 	return nil
-}
-
-// branchExists checks whether `branch` exists locally.
-func branchExists(repo *git.Repo, branch string) bool {
-	wts, _ := repo.Worktrees()
-	for _, w := range wts {
-		if w.Branch == branch {
-			return true
-		}
-	}
-	// We deliberately don't shell to `git rev-parse` here — `git worktree add`
-	// already handles both create and existing-branch cases; this hint just
-	// picks the right flag for the common case.
-	return false
 }
 
 func promptYN(msg string) bool {
