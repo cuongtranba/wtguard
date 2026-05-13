@@ -26,6 +26,12 @@ import (
 // `git`.
 func Run(args []string) int {
 	gargs := parseGlobalFlags(args)
+	// `git --help <sub>` and `git --version` are terminal: git prints docs
+	// and never reaches the subcommand. Skip intercept so wtguard doesn't
+	// shadow the user's request for help.
+	if gargs.hasTerminalGlobalFlag() {
+		return passthrough(args)
+	}
 	switch gargs.Subcommand {
 	case "commit":
 		return interceptCommit(gargs)
@@ -34,6 +40,16 @@ func Run(args []string) int {
 	default:
 		return passthrough(args)
 	}
+}
+
+func (g GlobalArgs) hasTerminalGlobalFlag() bool {
+	for _, f := range g.GlobalFlags {
+		switch f {
+		case "--help", "-h", "--version":
+			return true
+		}
+	}
+	return false
 }
 
 // GlobalArgs is the result of parseGlobalFlags. It separates git's own
@@ -208,7 +224,7 @@ func interceptPush(g GlobalArgs) int {
 	}
 	bypass := os.Getenv("WTGUARD_BYPASS") == "1"
 	br, hasBranch, _ := repo.CurrentBranch()
-	targets, _ := ParsePush(g.SubArgs, br, hasBranch)
+	targets := ParsePush(g.SubArgs, br, hasBranch)
 	for _, t := range targets {
 		for _, p := range settings.Protected {
 			if t == p {

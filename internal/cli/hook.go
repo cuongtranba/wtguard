@@ -1,11 +1,11 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall"
 
 	"github.com/cuongtranba/wtguard/internal/audit"
 	"github.com/cuongtranba/wtguard/internal/config"
@@ -118,33 +118,10 @@ func chainPreCommitLocal(args []string, repo *git.Repo) error {
 	cmd.Dir = repo.Root()
 	if err := cmd.Run(); err != nil {
 		var exitErr *exec.ExitError
-		if asExit(err, &exitErr) {
+		if errors.As(err, &exitErr) {
 			return cli.Exit("", exitErr.ExitCode())
 		}
 		return fmt.Errorf("hook: chained %s: %w", chained, err)
 	}
 	return nil
 }
-
-func asExit(err error, target **exec.ExitError) bool {
-	type unwrapper interface{ Unwrap() error }
-	for err != nil {
-		if ee, ok := err.(*exec.ExitError); ok {
-			*target = ee
-			return true
-		}
-		if ws, ok := err.(*exec.Error); ok && ws.Err != nil {
-			err = ws.Err
-			continue
-		}
-		u, ok := err.(unwrapper)
-		if !ok {
-			break
-		}
-		err = u.Unwrap()
-	}
-	return false
-}
-
-// suppress unused for syscall on platforms that don't need it.
-var _ = syscall.Getpid

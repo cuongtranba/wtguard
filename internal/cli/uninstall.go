@@ -68,7 +68,10 @@ func actionUninstall(c *cli.Context) error {
 	}
 
 	// 3. shell rc unpatch
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return fmt.Errorf("uninstall: locate home directory: %w", err)
+	}
 	for _, target := range shellrc.AllKnownTargets(home) {
 		res, err := shellrc.Unpatch(target)
 		if err != nil {

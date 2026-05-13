@@ -22,7 +22,7 @@ import (
 //
 // Returns the list of destination branches. `currentBranch` is used when no
 // refspec is provided and hasBranch is true.
-func ParsePush(subArgs []string, currentBranch string, hasBranch bool) ([]string, error) {
+func ParsePush(subArgs []string, currentBranch string, hasBranch bool) []string {
 	var positional []string
 	i := 0
 	for i < len(subArgs) {
@@ -45,23 +45,23 @@ func ParsePush(subArgs []string, currentBranch string, hasBranch bool) ([]string
 	}
 	if len(positional) == 0 {
 		if hasBranch {
-			return []string{currentBranch}, nil
+			return []string{currentBranch}
 		}
-		return nil, nil
+		return nil
 	}
 	// First positional is the remote, rest are refspecs.
 	refspecs := positional[1:]
 	if len(refspecs) == 0 {
 		if hasBranch {
-			return []string{currentBranch}, nil
+			return []string{currentBranch}
 		}
-		return nil, nil
+		return nil
 	}
 	out := make([]string, 0, len(refspecs))
 	for _, r := range refspecs {
 		out = append(out, destOfRefspec(r, currentBranch))
 	}
-	return out, nil
+	return out
 }
 
 func destOfRefspec(refspec, currentBranch string) string {

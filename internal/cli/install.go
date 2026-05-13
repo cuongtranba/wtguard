@@ -69,7 +69,10 @@ func actionInstall(c *cli.Context) error {
 	}
 
 	// 3. shell rc patch
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return fmt.Errorf("install: locate home directory: %w", err)
+	}
 	for _, target := range shellrc.Targets(os.Getenv("SHELL"), home) {
 		res, err := shellrc.Patch(target, binDir)
 		if err != nil {

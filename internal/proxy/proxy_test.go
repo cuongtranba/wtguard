@@ -92,9 +92,32 @@ func TestParsePush(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, _ := ParsePush(tc.args, tc.currentBranch, tc.hasBranch)
+			got := ParsePush(tc.args, tc.currentBranch, tc.hasBranch)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("ParsePush(%v) = %v, want %v", tc.args, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestHasTerminalGlobalFlag(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want bool
+	}{
+		{"help before subcommand", []string{"--help", "commit"}, true},
+		{"version alone", []string{"--version"}, true},
+		{"short help", []string{"-h"}, true},
+		{"plain commit", []string{"commit", "-m", "x"}, false},
+		{"no-pager status", []string{"--no-pager", "status"}, false},
+		{"commit --help is subcmd flag, not global", []string{"commit", "--help"}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			g := parseGlobalFlags(tc.args)
+			if got := g.hasTerminalGlobalFlag(); got != tc.want {
+				t.Errorf("hasTerminalGlobalFlag(%v) = %v, want %v", tc.args, got, tc.want)
 			}
 		})
 	}
