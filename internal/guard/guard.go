@@ -35,8 +35,8 @@ type Decision struct {
 //   - Bypass env set → allow (caller is responsible for auditing).
 //   - Detached HEAD → allow.
 //   - Branch ∉ protected → allow.
-//   - Policy "always" → block.
-//   - Policy "worktree-active" (default) → block iff worktree count > 1.
+//   - Policy "always" (default) → block.
+//   - Policy "worktree-active" → block iff worktree count > 1.
 func Decide(r Rule) Decision {
 	if r.BypassEnv {
 		return Decision{Block: false, Reason: "bypass env set"}
@@ -49,7 +49,7 @@ func Decide(r Rule) Decision {
 	}
 	policy := r.Policy
 	if policy == "" {
-		policy = config.PolicyWorktreeActive
+		policy = config.PolicyAlways
 	}
 	switch policy {
 	case config.PolicyAlways:

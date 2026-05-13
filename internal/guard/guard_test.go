@@ -53,8 +53,18 @@ func TestDecide(t *testing.T) {
 			wantBlock: true,
 		},
 		{
-			name:      "empty policy defaults to worktree-active",
-			rule:      Rule{Branch: "main", Worktrees: 2, ProtectedList: protected},
+			name:      "default policy blocks commit on master with single worktree",
+			rule:      Rule{Branch: "master", Worktrees: 1, ProtectedList: protected},
+			wantBlock: true,
+		},
+		{
+			name:      "default policy blocks commit on main with single worktree",
+			rule:      Rule{Branch: "main", Worktrees: 1, ProtectedList: protected},
+			wantBlock: true,
+		},
+		{
+			name:      "default policy blocks regardless of worktree count",
+			rule:      Rule{Branch: "master", Worktrees: 4, ProtectedList: protected},
 			wantBlock: true,
 		},
 		{

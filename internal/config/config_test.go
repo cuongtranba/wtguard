@@ -62,3 +62,14 @@ func TestIsKnown(t *testing.T) {
 		t.Errorf("IsKnown(unknown) = true")
 	}
 }
+
+func TestDefaults(t *testing.T) {
+	d := Defaults()
+	if d.Policy != PolicyAlways {
+		t.Errorf("Defaults().Policy = %q, want %q (every commit/push to a protected branch must be blocked out of the box)", d.Policy, PolicyAlways)
+	}
+	wantProtected := []string{"main", "master"}
+	if !reflect.DeepEqual(d.Protected, wantProtected) {
+		t.Errorf("Defaults().Protected = %v, want %v", d.Protected, wantProtected)
+	}
+}

@@ -31,7 +31,7 @@ type Settings struct {
 func Defaults() Settings {
 	return Settings{
 		Protected:   []string{"main", "master"},
-		Policy:      PolicyWorktreeActive,
+		Policy:      PolicyAlways,
 		WorktreeDir: "../",
 		BypassLog:   true,
 		ChainHook:   true,

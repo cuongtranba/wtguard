@@ -99,6 +99,120 @@ func TestEndToEndBlocksCommitOnProtectedBranch(t *testing.T) {
 	}
 }
 
+// TestDefaultPolicyBlocksCommitAndPushOnMasterWithSingleWorktree builds the
+// binary, inits a real git repo on `master` with only the main worktree (no
+// feature worktrees created), and asserts that under the default policy
+// (`always`) both `git commit` and `git push` to `master` are blocked.
+//
+// The commit path is exercised through the pre-commit hook (real `git
+// commit` invokes it). The push path is exercised through the proxy:
+// pre-commit is not invoked on push, so we run the wtguard binary directly
+// with argv[0]="git" to simulate the PATH-injected proxy intercepting `git
+// push origin master`.
+//
+// Run with: go test -tags=integration ./internal/cli -run DefaultPolicy
+func TestDefaultPolicyBlocksCommitAndPushOnMasterWithSingleWorktree(t *testing.T) {
+	tmp := t.TempDir()
+	binPath := filepath.Join(tmp, "wtguard")
+
+	root := repoRoot(t)
+	build := exec.Command("go", "build", "-o", binPath, "./cmd/wtguard")
+	build.Dir = root
+	if out, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("go build failed: %v\n%s", err, out)
+	}
+
+	repo := filepath.Join(tmp, "repo")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	must(t, runCmd(repo, "git", "init", "-q", "-b", "master"))
+	must(t, runCmd(repo, "git", "config", "user.email", "test@example.com"))
+	must(t, runCmd(repo, "git", "config", "user.name", "test"))
+	if err := os.WriteFile(filepath.Join(repo, "README"), []byte("hi\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	must(t, runCmd(repo, "git", "add", "README"))
+	must(t, runCmd(repo, "git", "commit", "-q", "-m", "init"))
+
+	env := append(os.Environ(),
+		"WTGUARD_BIN="+binPath,
+		"WTGUARD_DIR="+filepath.Join(tmp, ".wtguard"),
+		"HOME="+tmp,
+	)
+	installCmd := exec.Command(binPath, "--repo", repo, "install")
+	installCmd.Env = env
+	if out, err := installCmd.CombinedOutput(); err != nil {
+		t.Fatalf("install failed: %v\n%s", err, out)
+	}
+
+	// Sanity: this repo has exactly one worktree (the main checkout). Under
+	// the old `worktree-active` default this would NOT block; under the new
+	// `always` default it must.
+	wtOut, err := exec.Command("git", "-C", repo, "worktree", "list").CombinedOutput()
+	if err != nil {
+		t.Fatalf("worktree list: %v\n%s", err, wtOut)
+	}
+	if got := strings.Count(string(wtOut), "\n"); got != 1 {
+		t.Fatalf("expected exactly 1 worktree, got %d:\n%s", got, wtOut)
+	}
+
+	t.Run("commit on master is blocked", func(t *testing.T) {
+		if err := os.WriteFile(filepath.Join(repo, "README"), []byte("changed\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		must(t, runCmd(repo, "git", "add", "README"))
+		commit := exec.Command("git", "commit", "-m", "bad")
+		commit.Dir = repo
+		commit.Env = env
+		var stderr bytes.Buffer
+		commit.Stderr = &stderr
+		if err := commit.Run(); err == nil {
+			t.Fatalf("expected commit to be blocked, got exit 0\nstderr: %s", stderr.String())
+		}
+		if !strings.Contains(stderr.String(), "wtguard:") {
+			t.Errorf("stderr missing wtguard prefix:\n%s", stderr.String())
+		}
+		if !strings.Contains(stderr.String(), "master") {
+			t.Errorf("stderr missing branch name:\n%s", stderr.String())
+		}
+	})
+
+	t.Run("push to master is blocked", func(t *testing.T) {
+		// Invoke the wtguard binary with argv[0]="git" so it runs as the
+		// proxy. No real remote is needed — the proxy blocks before git
+		// dials out.
+		push := &exec.Cmd{
+			Path: binPath,
+			Args: []string{"git", "push", "origin", "master"},
+			Dir:  repo,
+			Env:  env,
+		}
+		var stdout, stderr bytes.Buffer
+		push.Stdout = &stdout
+		push.Stderr = &stderr
+		err := push.Run()
+		if err == nil {
+			t.Fatalf("expected push to be blocked, got exit 0\nstdout: %s\nstderr: %s", stdout.String(), stderr.String())
+		}
+		combined := stdout.String() + stderr.String()
+		if !strings.Contains(combined, "wtguard:") {
+			t.Errorf("output missing wtguard prefix:\n%s", combined)
+		}
+		if !strings.Contains(combined, "master") {
+			t.Errorf("output missing branch name:\n%s", combined)
+		}
+	})
+
+	t.Run("bypass env allows commit", func(t *testing.T) {
+		bypassEnv := append(env, "WTGUARD_BYPASS=1")
+		out, err := runCmdOut(repo, bypassEnv, "git", "commit", "-m", "bypass")
+		if err != nil {
+			t.Fatalf("bypass commit failed: %v\n%s", err, out)
+		}
+	})
+}
+
 func must(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {

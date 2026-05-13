@@ -21,9 +21,10 @@ humans accidentally committing/pushing directly to a protected branch:
      bypassed (e.g. /usr/bin/git called directly).
   3. (opt-in) GitHub branch protection via 'wtguard install --remote-protect'.
 
-Block rule: branch is in wtguard.protected AND 'git worktree list' has >1
-entry (policy=worktree-active, the default). Set wtguard.policy=always to
-drop the worktree clause.
+Block rule: branch is in wtguard.protected (policy=always, the default —
+blocks every commit/push on a protected branch). Set
+wtguard.policy=worktree-active to relax the rule and only block when a
+feature worktree already exists.
 
 Run 'wtguard explain' for a full LLM-friendly reference (markdown).`
 
