@@ -114,7 +114,11 @@ func buildBlock(binDir string) string {
 	b.WriteString("\n")
 	b.WriteString(BeginMarker)
 	b.WriteString("\n")
-	fmt.Fprintf(&b, "export PATH=%q\n", binDir+":$PATH")
+	// Self-idempotent: bash sources both ~/.bash_profile (login) and
+	// ~/.bashrc (interactive), so without this guard PATH would be
+	// prepended twice.
+	fmt.Fprintf(&b, "case \":$PATH:\" in *:%q:*) ;; *) export PATH=%q ;; esac\n",
+		binDir, binDir+":$PATH")
 	b.WriteString(EndMarker)
 	b.WriteString("\n")
 	return b.String()

@@ -37,8 +37,6 @@ func actionUninstall(c *cli.Context) error {
 			if err == nil {
 				res, err := hook.Uninstall(hooksDir)
 				switch {
-				case err != nil && res.NotOurs:
-					fmt.Fprintf(os.Stderr, "hook:     %v\n", err)
 				case err != nil:
 					fmt.Fprintf(os.Stderr, "hook:     %v\n", err)
 				case res.Removed && res.Restored != "":

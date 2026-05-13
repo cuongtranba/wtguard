@@ -241,6 +241,7 @@ func interceptPush(g GlobalArgs) int {
 					logEntry.Decision = audit.DecisionBypass
 					logEntry.Bypass = true
 					_ = audit.Append(logEntry, audit.GlobalPath(), audit.RepoPath(repo.GitDir()))
+					fmt.Fprintf(os.Stderr, "wtguard: bypass logged for push to %q\n", t)
 					return passthrough(g.Raw)
 				}
 				_ = audit.Append(logEntry, audit.GlobalPath(), audit.RepoPath(repo.GitDir()))
