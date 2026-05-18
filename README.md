@@ -118,11 +118,12 @@ If you already had a `pre-commit` hook, it is preserved as `pre-commit.local` an
 ### The block rule
 
 ```
-block iff:  current branch ∈ wtguard.protected
-       AND  git worktree list reports > 1 entry   (default policy)
+block iff:  current branch ∈ wtguard.protected     (policy=always, default)
 ```
 
-Set `wtguard.policy = always` to drop the worktree clause and protect `main` even when no worktree is open.
+The default policy is `always`: every commit/push to a protected branch is rejected, regardless of whether a feature worktree exists.
+
+Set `wtguard.policy = worktree-active` to relax the rule and only block when `git worktree list` reports more than one entry (i.e. a feature worktree has been created). Useful if you legitimately make occasional small commits directly to `main` (e.g. version bumps) and only want protection once feature work has started.
 
 ### Bypass
 
@@ -135,7 +136,7 @@ All settings live in `.git/config` under `wtguard.*`:
 | Key | Default | Notes |
 |---|---|---|
 | `wtguard.protected` | `main,master` | comma-separated branch list |
-| `wtguard.policy` | `worktree-active` | or `always` |
+| `wtguard.policy` | `always` | or `worktree-active` |
 | `wtguard.worktreeDir` | `../` | base dir for new worktrees |
 | `wtguard.bypassLog` | `true` | log bypassed commits |
 | `wtguard.chainHook` | `true` | run `pre-commit.local` after guard check |

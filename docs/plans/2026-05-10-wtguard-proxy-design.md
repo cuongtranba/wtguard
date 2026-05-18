@@ -99,8 +99,8 @@ func main() {
 ```go
 type Policy string
 const (
-    PolicyWorktreeActive Policy = "worktree-active" // default
-    PolicyAlways         Policy = "always"
+    PolicyWorktreeActive Policy = "worktree-active"
+    PolicyAlways         Policy = "always" // default (changed 2026-05-13; was worktree-active)
 )
 
 type Rule struct {
@@ -123,8 +123,8 @@ func Decide(r Rule) Decision
 
 ### Policy
 
-- `worktree-active` (default) — block iff branch ∈ protected AND worktree count > 1.
-- `always` — block iff branch ∈ protected (regardless of worktree count).
+- `always` (default, since 2026-05-13) — block iff branch ∈ protected (regardless of worktree count).
+- `worktree-active` — block iff branch ∈ protected AND worktree count > 1.
 
 Set per repo via `git config --local wtguard.policy <value>`.
 
