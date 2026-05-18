@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/cuongtranba/wtguard/compare/v1.1.0...v1.2.0) (2026-05-18)
+
+
+### Features
+
+* implement install/uninstall/proxy/hook commands per design docs ([#7](https://github.com/cuongtranba/wtguard/issues/7)) ([b3cb8af](https://github.com/cuongtranba/wtguard/commit/b3cb8afaa582ba58e6ef449ac77aa8842e41aa1e))
+
 ## [1.1.0](https://github.com/cuongtranba/wtguard/compare/v1.0.0...v1.1.0) (2026-05-10)
 
 
